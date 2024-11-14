@@ -22,11 +22,108 @@ bool kDefaultCanProgressFunction(int page) {
 typedef CanProgress = bool Function(int page);
 
 class IntroductionScreen extends StatefulWidget {
-  /// All pages of the onboarding
-  final List<PageViewModel>? pages;
+  const IntroductionScreen({
+    super.key,
+    this.pages,
+    this.onDone,
+    this.onSkip,
+    this.onChange,
+    this.done,
+    this.overrideDone,
+    this.skip,
+    this.overrideSkip,
+    this.next,
+    this.overrideNext,
+    this.back,
+    this.overrideBack,
+    this.showSkipButton = false,
+    this.showNextButton = true,
+    this.showDoneButton = true,
+    this.showBottomPart = true,
+    this.showBackButton = false,
+    this.customProgress,
+    this.isProgress = true,
+    this.isProgressTap = true,
+    this.freeze = false,
+    this.globalBackgroundColor,
+    // this.dotsDecorator = const DotsDecorator(),
+    this.dotsContainerDecorator,
+    this.animationDuration = 350,
+    this.autoScrollDuration,
+    this.infiniteAutoScroll = false,
+    this.initialPage = 0,
+    this.skipOrBackFlex = 1,
+    this.nextFlex = 1,
+    this.curve = Curves.easeIn,
+    this.baseBtnStyle,
+    this.skipStyle,
+    this.nextStyle,
+    this.doneStyle,
+    this.backStyle,
+    this.skipSemantic,
+    this.nextSemantic,
+    this.doneSemantic,
+    this.backSemantic,
+    this.resizeToAvoidBottomInset = true,
+    this.controlsMargin = EdgeInsets.zero,
+    this.controlsPadding = const EdgeInsets.all(16),
+    this.scrollControllers,
+    this.pagesAxis = Axis.horizontal,
+    this.scrollPhysics = const BouncingScrollPhysics(),
+    this.allowImplicitScrolling = false,
+    this.canProgress = kDefaultCanProgressFunction,
+    this.safeAreaList = const [false, false, false, false],
+    this.pageHeight,
+  })  : assert(
+          !showDoneButton || done != null || overrideDone != null,
+          "You must set 'done' or 'overrideDone' parameter, "
+          "or set 'showDoneButton' to false",
+        ),
+        assert(
+          done == null || onDone != null,
+          "If you set 'done' parameter, you must also set 'onDone' parameter",
+        ),
+        assert(
+          !showSkipButton || skip != null || overrideSkip != null,
+          "You must set 'skip' or 'overrideSkip' parameter, "
+          "or set 'showSkipButton' to false",
+        ),
+        assert(
+          !showNextButton || next != null || overrideNext != null,
+          "You must set 'next' or 'overrideNext' parameter, "
+          "or set 'showNextButton' to false",
+        ),
+        assert(
+          !showBackButton || back != null || overrideBack != null,
+          "You must set 'back' or 'overrideBack' parameter, "
+          "or set 'showBackButton' to false",
+        ),
+        assert(
+          !(showBackButton && showSkipButton),
+          "You cannot set 'showBackButton' and 'showSkipButton' "
+          'to true. Only one, or both false.',
+        ),
+        assert(
+          skipOrBackFlex >= 0 && nextFlex >= 0,
+          'Flex parameters must be >= 0',
+        ),
+        assert(
+          initialPage >= 0,
+          'Initial page parameter must by a positive number, >= 0.',
+        ),
+        assert(
+          customProgress != null && isProgress || customProgress == null,
+          'customProgress can only be used if isProgress = true',
+        ),
+        assert(
+          (infiniteAutoScroll && autoScrollDuration != null) ||
+              !infiniteAutoScroll,
+          'infiniteAutoScroll can only be true if autoScrollDuration != null',
+        );
 
-  /// All pages of the onboarding, as a complete widget instead of a PageViewModel
-  final List<Widget>? rawPages;
+  /// All pages of the onboarding, as a complete widget
+  /// instead of a PageViewModel
+  final List<Widget>? pages;
 
   /// Callback when Done button is pressed
   final VoidCallback? onDone;
@@ -86,17 +183,13 @@ class IntroductionScreen extends StatefulWidget {
   /// @Default `true`
   final bool showBottomPart;
 
-  /// If the bottom part of the page should be displayed when the keyboard is opened
-  ///
-  /// @Default `false`
-  final bool hideBottomOnKeyboard;
-
   /// If the Back button should be display
   ///
   /// @Default `false`
   final bool showBackButton;
 
-  /// If a custom Widget should be used instead of the default progress indicator
+  /// If a custom Widget should be used instead of
+  /// the default progress indicator
   ///
   /// @Default `null`
   final Widget? customProgress;
@@ -116,11 +209,12 @@ class IntroductionScreen extends StatefulWidget {
   /// @Default `false`
   final bool freeze;
 
-  /// Global background color (only visible when a page has a transparent background color)
+  /// Global background color
+  /// (only visible when a page has a transparent background color)
   final Color? globalBackgroundColor;
 
   /// Dots decorator to custom dots color, size and spacing
-  final DotsDecorator dotsDecorator;
+  // final DotsDecorator dotsDecorator;
 
   /// Decorator to customize the appearance of the progress dots container.
   /// This is useful when the background image is full screen.
@@ -137,10 +231,13 @@ class IntroductionScreen extends StatefulWidget {
   ///
   /// @Note `null` means no auto scroll
   ///
-  /// Once the value of `autoScrollDuration` is set, auto scroll will be activated and it will scroll to the next page automatically after the specified duration.
+  /// Once the value of `autoScrollDuration` is set,
+  /// auto scroll will be activated and it will scroll to the next page
+  /// automatically after the specified duration.
   final int? autoScrollDuration;
 
-  /// Defines if the autoScroll should be infinite, returning to the first page after it reaches the last one.
+  /// Defines if the autoScroll should be infinite,
+  /// returning to the first page after it reaches the last one.
   ///
   /// @Default `false`
   ///
@@ -156,11 +253,6 @@ class IntroductionScreen extends StatefulWidget {
   ///
   /// @Default `1`
   final int skipOrBackFlex;
-
-  /// Flex ratio of the progress indicator
-  ///
-  /// @Default `1`
-  final int dotsFlex;
 
   /// Flex ratio of the next/done button
   ///
@@ -207,28 +299,17 @@ class IntroductionScreen extends StatefulWidget {
   /// Controls position
   ///
   /// @Default `Position(left: 0, right: 0, bottom: 0)`
-  final Position controlsPosition;
+  // final Position controlsPosition;
 
   /// Margin for controls
   ///
   /// @Default `EdgeInsets.zero`
   final EdgeInsets controlsMargin;
 
-  /// Margin for controls
-  ///
-  /// @Default `EdgeInsets.zero`
-  final EdgeInsets bodyPadding;
-
   /// Padding for controls
   ///
   /// @Default `EdgeInsets.all(16.0)`
   final EdgeInsets controlsPadding;
-
-  /// A header widget to be shown on every screen
-  final Widget? globalHeader;
-
-  /// A footer widget to be shown on every screen
-  final Widget? globalFooter;
 
   /// ScrollController of vertical SingleChildScrollView for every single page
   final List<ScrollController?>? scrollControllers;
@@ -243,11 +324,6 @@ class IntroductionScreen extends StatefulWidget {
   /// @Default `BouncingScrollPhysics()`
   final ScrollPhysics scrollPhysics;
 
-  /// If is right to left behaviour
-  ///
-  /// @Default `false`
-  final bool rtl;
-
   /// Corresponds to PageView's parameter of the same name.
   /// More details can be found
   /// [here](https://api.flutter.dev/flutter/widgets/PageView/PageView.html).
@@ -256,14 +332,17 @@ class IntroductionScreen extends StatefulWidget {
   final bool allowImplicitScrolling;
 
   /// PageView's bool safe area list.
-  /// the list defines if the safe area will be active on left, right, top and bottom, respectively.
+  /// the list defines if the safe area will be active on
+  /// left, right, top and bottom, respectively.
   ///
   /// @Default `[false,false,false,false]`
   final List<bool> safeAreaList;
 
   /// A handler to check if the user is allowed to progress to the next page.
-  /// If returned value is true, the page will progress to the next page, otherwise the page will not progress.
-  /// In order to make it work properly with TextFormField, you should place setState in the onChanged callback of the TextFormField.
+  /// If returned value is true, the page will progress to the next page,
+  /// otherwise the page will not progress.
+  /// In order to make it work properly with TextFormField,
+  /// you should place setState in the onChanged callback of the TextFormField.
   ///
   /// @Default `true`
   /// ```dart
@@ -279,119 +358,7 @@ class IntroductionScreen extends StatefulWidget {
   /// ```
   final CanProgress canProgress;
 
-  IntroductionScreen(
-      {Key? key,
-      this.pages,
-      this.rawPages,
-      this.onDone,
-      this.onSkip,
-      this.onChange,
-      this.done,
-      this.overrideDone,
-      this.skip,
-      this.overrideSkip,
-      this.next,
-      this.overrideNext,
-      this.back,
-      this.overrideBack,
-      this.showSkipButton = false,
-      this.showNextButton = true,
-      this.showDoneButton = true,
-      this.showBottomPart = true,
-      this.showBackButton = false,
-      this.customProgress,
-      this.isProgress = true,
-      this.hideBottomOnKeyboard = false,
-      this.isProgressTap = true,
-      this.freeze = false,
-      this.globalBackgroundColor,
-      this.dotsDecorator = const DotsDecorator(),
-      this.dotsContainerDecorator,
-      this.animationDuration = 350,
-      this.autoScrollDuration,
-      this.infiniteAutoScroll = false,
-      this.initialPage = 0,
-      this.skipOrBackFlex = 1,
-      this.dotsFlex = 1,
-      this.nextFlex = 1,
-      this.curve = Curves.easeIn,
-      this.baseBtnStyle,
-      this.skipStyle,
-      this.nextStyle,
-      this.doneStyle,
-      this.backStyle,
-      this.skipSemantic,
-      this.nextSemantic,
-      this.doneSemantic,
-      this.backSemantic,
-      this.resizeToAvoidBottomInset = true,
-      this.controlsPosition = const Position(left: 0, right: 0, bottom: 0),
-      this.controlsMargin = EdgeInsets.zero,
-      this.controlsPadding = const EdgeInsets.all(16.0),
-      this.bodyPadding = EdgeInsets.zero,
-      this.globalHeader,
-      this.globalFooter,
-      this.scrollControllers,
-      this.pagesAxis = Axis.horizontal,
-      this.scrollPhysics = const BouncingScrollPhysics(),
-      this.rtl = false,
-      this.allowImplicitScrolling = false,
-      this.canProgress = kDefaultCanProgressFunction,
-      this.safeAreaList = const [false, false, false, false]})
-      : assert(
-          pages != null || rawPages != null,
-          "You must set either 'pages' or 'rawPages' parameter",
-        ),
-        assert(
-          (pages?.length ?? rawPages?.length ?? 0) > 0,
-          "You must provide at least one page using 'pages' or 'rawPages' parameter !",
-        ),
-        assert(
-          !showDoneButton || done != null || overrideDone != null,
-          "You must set 'done' or 'overrideDone' parameter, or set 'showDoneButton' to false",
-        ),
-        assert(
-          done == null || onDone != null,
-          "If you set 'done' parameter, you must also set 'onDone' parameter",
-        ),
-        assert(
-          !showSkipButton || skip != null || overrideSkip != null,
-          "You must set 'skip' or 'overrideSkip' parameter, or set 'showSkipButton' to false",
-        ),
-        assert(
-          !showNextButton || next != null || overrideNext != null,
-          "You must set 'next' or 'overrideNext' parameter, or set 'showNextButton' to false",
-        ),
-        assert(
-          !showBackButton || back != null || overrideBack != null,
-          "You must set 'back' or 'overrideBack' parameter, or set 'showBackButton' to false",
-        ),
-        assert(
-          !(showBackButton && showSkipButton),
-          "You cannot set 'showBackButton' and 'showSkipButton' to true. Only one, or both false.",
-        ),
-        assert(
-          skipOrBackFlex >= 0 && dotsFlex >= 0 && nextFlex >= 0,
-          'Flex parameters must be >= 0',
-        ),
-        assert(
-          initialPage >= 0,
-          'Initial page parameter must by a positive number, >= 0.',
-        ),
-        assert(
-          hideBottomOnKeyboard == isProgress || !hideBottomOnKeyboard,
-          'hideBottomOnKeyboard can only be true if isProgress = true',
-        ),
-        assert(
-          customProgress != null && isProgress || customProgress == null,
-          'customProgress can only be used if isProgress = true',
-        ),
-        assert(
-          (infiniteAutoScroll && autoScrollDuration != null) ||
-              !infiniteAutoScroll,
-          'infiniteAutoScroll can only be true if autoScrollDuration != null',
-        ),
-        super(key: key);
+  final double? pageHeight;
 
   @override
   IntroductionScreenState createState() => IntroductionScreenState();
@@ -399,11 +366,9 @@ class IntroductionScreen extends StatefulWidget {
 
 class IntroductionScreenState extends State<IntroductionScreen> {
   late PageController _pageController;
-  double _currentPage = 0.0;
+  double _currentPage = 0;
   bool _isSkipPressed = false;
   bool _isScrolling = false;
-  late bool _showBottom;
-  StreamSubscription<bool>? keyboardSubscription;
 
   PageController get controller => _pageController;
 
@@ -412,27 +377,13 @@ class IntroductionScreenState extends State<IntroductionScreen> {
     super.initState();
     final int initialPage = min(widget.initialPage, getPagesLength() - 1);
     _pageController = PageController(initialPage: initialPage);
-    _showBottom = widget.showBottomPart;
     _currentPage = initialPage.toDouble();
     _autoScroll(widget.autoScrollDuration);
-    if (widget.hideBottomOnKeyboard) {
-      final keyboardVisibilityController = KeyboardVisibilityController();
-      keyboardSubscription = keyboardVisibilityController.onChange.listen(
-        (bool visible) {
-          setState(() {
-            _showBottom = !visible;
-          });
-        },
-      );
-    }
   }
 
   @override
   void dispose() {
     _pageController.dispose();
-    if (keyboardSubscription != null) {
-      keyboardSubscription!.cancel();
-    }
     widget.scrollControllers?.forEach((controller) {
       controller?.dispose();
     });
@@ -440,31 +391,31 @@ class IntroductionScreenState extends State<IntroductionScreen> {
   }
 
   int getPagesLength() {
-    return (widget.pages ?? widget.rawPages!).length;
+    return (widget.pages!).length;
   }
 
   int getCurrentPage() => _currentPage.round();
 
-  Future<void> _autoScroll(int? _durationInt) async {
-    if (_durationInt != null) {
-      final Duration _autoscrollDuration = Duration(milliseconds: _durationInt);
-      final _animationDuration = Duration(
+  Future<void> _autoScroll(int? durationInt) async {
+    if (durationInt != null) {
+      final autoScrollDuration = Duration(milliseconds: durationInt);
+      final animationDuration = Duration(
         milliseconds: widget.animationDuration,
       );
-      final int pagesLength = getPagesLength() - 1;
+      final pagesLength = getPagesLength() - 1;
       if (widget.infiniteAutoScroll) {
         while (mounted) {
           await _movePage(
-            _autoscrollDuration,
-            _animationDuration,
+            autoScrollDuration,
+            animationDuration,
             getCurrentPage() < pagesLength,
           );
         }
       } else {
         while (mounted && getCurrentPage() < pagesLength) {
           await _movePage(
-            _autoscrollDuration,
-            _animationDuration,
+            autoScrollDuration,
+            animationDuration,
             true,
           );
         }
@@ -473,11 +424,11 @@ class IntroductionScreenState extends State<IntroductionScreen> {
   }
 
   Future<void> _movePage(
-    Duration autoscrollDuration,
+    Duration autoScrollDuration,
     Duration animationDuration,
     bool forward,
   ) async {
-    await Future.delayed(autoscrollDuration);
+    await Future.delayed(autoScrollDuration, () {});
     if (mounted && !_isSkipPressed && !_isScrolling) {
       if (forward) {
         await _pageController.nextPage(
@@ -521,7 +472,7 @@ class IntroductionScreenState extends State<IntroductionScreen> {
   }
 
   Future<void> animateScroll(int page) async {
-    bool isValidToProgress = widget.canProgress(getCurrentPage());
+    final isValidToProgress = widget.canProgress(getCurrentPage());
     if (isValidToProgress) {
       _isScrolling = true;
       await _pageController.animateToPage(
@@ -560,11 +511,11 @@ class IntroductionScreenState extends State<IntroductionScreen> {
         maintainSize: true,
         child: widget.overrideSkip ??
             IntroButton(
-              child: widget.skip!,
               style: widget.baseBtnStyle?.merge(widget.skipStyle) ??
                   widget.skipStyle,
               semanticLabel: widget.skipSemantic,
               onPressed: _onSkip,
+              child: widget.skip!,
             ),
       );
     } else if (widget.showBackButton &&
@@ -572,11 +523,11 @@ class IntroductionScreenState extends State<IntroductionScreen> {
         widget.canProgress(getCurrentPage())) {
       leftBtn = widget.overrideBack ??
           IntroButton(
-            child: widget.back!,
             style: widget.baseBtnStyle?.merge(widget.backStyle) ??
                 widget.backStyle,
             semanticLabel: widget.backSemantic,
             onPressed: !_isScrolling ? previous : null,
+            child: widget.back!,
           );
     }
 
@@ -584,34 +535,26 @@ class IntroductionScreenState extends State<IntroductionScreen> {
     if (isLastPage && widget.showDoneButton) {
       rightBtn = widget.overrideDone ??
           IntroButton(
-            child: widget.done!,
             style: widget.baseBtnStyle?.merge(widget.doneStyle) ??
                 widget.doneStyle,
             semanticLabel: widget.doneSemantic,
             onPressed: !_isScrolling ? widget.onDone : null,
+            child: widget.done!,
           );
     } else if (!isLastPage &&
         widget.showNextButton &&
         widget.canProgress(getCurrentPage())) {
       rightBtn = widget.overrideNext ??
           IntroButton(
-            child: widget.next!,
             style: widget.baseBtnStyle?.merge(widget.nextStyle) ??
                 widget.nextStyle,
             semanticLabel: widget.nextSemantic,
             onPressed: !_isScrolling ? next : null,
+            child: widget.next!,
           );
     }
 
-    final pages = widget.pages
-            ?.mapIndexed((index, page) => IntroPage(
-                  page: page,
-                  scrollController: CustomList(
-                    widget.scrollControllers,
-                  )?.elementAtOrNull(index),
-                ))
-            .toList() ??
-        widget.rawPages!;
+    final pages = widget.pages!;
 
     return SafeArea(
       left: widget.safeAreaList[0],
@@ -621,49 +564,44 @@ class IntroductionScreenState extends State<IntroductionScreen> {
       child: Scaffold(
         backgroundColor: widget.globalBackgroundColor,
         resizeToAvoidBottomInset: widget.resizeToAvoidBottomInset,
-        body: Stack(
-          children: [
-            Positioned.fill(
-              top: widget.bodyPadding.top,
-              left: widget.bodyPadding.left,
-              right: widget.bodyPadding.right,
-              bottom: widget.bodyPadding.bottom,
-              child: NotificationListener<ScrollNotification>(
-                onNotification: _onScroll,
-                child: PageView(
-                  reverse: widget.rtl,
-                  scrollDirection: widget.pagesAxis,
-                  controller: _pageController,
-                  onPageChanged: widget.onChange,
-                  allowImplicitScrolling: widget.allowImplicitScrolling,
-                  physics: widget.freeze
-                      ? const NeverScrollableScrollPhysics()
-                      : !widget.canProgress(getCurrentPage())
+        body: ScrollableChildContainer(
+          height: widget.pageHeight,
+          builder: (context, constraints, height) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DynamicSizeBlock(
+                  height: height,
+                  child: NotificationListener<ScrollNotification>(
+                    onNotification: _onScroll,
+                    child: PageView(
+                      scrollDirection: widget.pagesAxis,
+                      controller: _pageController,
+                      onPageChanged: widget.onChange,
+                      allowImplicitScrolling: widget.allowImplicitScrolling,
+                      physics: widget.freeze
                           ? const NeverScrollableScrollPhysics()
-                          : widget.scrollPhysics,
-                  children: pages
-                      .map((page) => NotificationListener(
-                            onNotification: (_) => true,
-                            child: page,
-                          ))
-                      .toList(),
+                          : !widget.canProgress(getCurrentPage())
+                              ? const NeverScrollableScrollPhysics()
+                              : widget.scrollPhysics,
+                      children: pages.map((page) {
+                        return NotificationListener(
+                          onNotification: (_) => true,
+                          child: page,
+                        );
+                      }).toList(),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            if (widget.globalHeader != null)
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                child: widget.globalHeader!,
-              ),
-            if (_showBottom)
-              Positioned(
-                left: widget.controlsPosition.left,
-                top: widget.controlsPosition.top,
-                right: widget.controlsPosition.right,
-                bottom: widget.controlsPosition.bottom,
-                child: Column(
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: TutorialFooter(
+                    pageCount: getPagesLength(),
+                    currentIndex: getCurrentPage(),
+                  ),
+                ),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
                       padding: widget.controlsPadding,
@@ -675,42 +613,19 @@ class IntroductionScreenState extends State<IntroductionScreen> {
                             flex: widget.skipOrBackFlex,
                             child: leftBtn ?? const SizedBox(),
                           ),
-                          Expanded(
-                            flex: widget.dotsFlex,
-                            child: Center(
-                              child: widget.isProgress
-                                  ? widget.customProgress ??
-                                      Semantics(
-                                        label:
-                                            "Page ${getCurrentPage() + 1} of ${getPagesLength()}",
-                                        excludeSemantics: true,
-                                        child: DotsIndicator(
-                                          reversed: widget.rtl,
-                                          dotsCount: getPagesLength(),
-                                          position: _currentPage.toDouble(),
-                                          decorator: widget.dotsDecorator,
-                                          onTap: widget.isProgressTap &&
-                                                  !widget.freeze
-                                              ? (pos) =>
-                                                  animateScroll(pos.toInt())
-                                              : null,
-                                        ),
-                                      )
-                                  : const SizedBox(),
-                            ),
-                          ),
+                          const Spacer(),
                           Expanded(
                             flex: widget.nextFlex,
                             child: rightBtn ?? const SizedBox(),
                           ),
-                        ].asReversed(widget.rtl),
+                        ],
                       ),
                     ),
-                    if (widget.globalFooter != null) widget.globalFooter!
                   ],
                 ),
-              ),
-          ],
+              ],
+            );
+          },
         ),
       ),
     );
